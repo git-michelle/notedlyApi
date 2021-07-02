@@ -8,9 +8,20 @@ const noteSchema = new mongoose.Schema(
       required: true,
     },
     author: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
       required: true,
     },
+    favoriteCount: {
+      type: Number,
+      default: 0,
+    },
+    favoritedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     // assign createdAt and updatedAt fields with a Date type

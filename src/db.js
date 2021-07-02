@@ -6,7 +6,7 @@ module.exports = {
     mongoose.set("useNewUrlParser", true);
     // set findAndModify to false so findOneAndUpdate is used instead
     mongoose.set("useFindAndModify", false);
-    // use createIndex in plae of ensureIndex
+    // use createIndex in place of ensureIndex
     mongoose.set("useCreateIndex", true);
     // Use the new server discovery and monitoring engine
     mongoose.set("useUnifiedTopology", true);

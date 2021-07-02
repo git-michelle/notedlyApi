@@ -5,25 +5,50 @@ const {
   ForbiddenError,
 } = require("apollo-server-express");
 require("dotenv").config();
+const mongoose = require("mongoose");
 
 const gravatar = require("../util/gravatar");
 
 module.exports = {
-  newNote: async (parent, args, { models }) => {
+  newNote: async (parent, args, { models, user }) => {
+    if (!user) {
+      throw new AuthenticationError("You must be signed in to create a note.");
+    }
     return await models.Note.create({
       content: args.content,
-      author: "Michelle",
+      //reference the author's mongo id
+      author: mongoose.Types.ObjectId(user.id),
     });
   },
-  deleteNote: async (parent, { id }, { models }) => {
+  deleteNote: async (parent, { id }, { models, user }) => {
+    if (!user) {
+      throw new AuthenticationError("You must be signed in to delete a note!");
+    }
+
+    const note = await models.Note.findById(id);
+    if (note && String(note.author) !== user.id) {
+      throw new ForbiddenError(
+        "You don't have permission to delete that note."
+      );
+    }
+
     try {
-      await models.Note.findOneAndRemove({ _id: id });
+      await note.remove();
       return true;
     } catch (err) {
       return false;
     }
   },
-  updateNote: async (parent, { content, id }, { models }) => {
+  updateNote: async (parent, { content, id }, { models, user }) => {
+    if (!user) {
+      throw new AuthenticationError("You must be signed in to update a note.");
+    }
+
+    const note = await models.Note.findById(id);
+    if (note && String(note.author) !== user.id) {
+      throw new ForbiddenError("You don't have permission to update the note");
+    }
+
     return await models.Note.findOneAndUpdate(
       {
         _id: id,
@@ -79,5 +104,45 @@ module.exports = {
     }
 
     return jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+  },
+  toggleFavorite: async (parent, { id }, { models, user }) => {
+    if (!user) {
+      throw new AuthenticationError();
+    }
+
+    // check if user has already favorited a note
+    let noteCheck = await models.Note.findById(id);
+    const hasUser = noteCheck.favoritedBy.indexOf(user.id);
+
+    // if user has liked, pull them from list and reduce favorited count by 1
+    if (hasUser >= 0) {
+      return await models.Note.findByIdAndUpdate(
+        id,
+        {
+          $pull: {
+            favoritedBy: mongoose.Types.ObjectId(user.id),
+          },
+          $inc: {
+            favoriteCount: -1,
+          },
+        },
+        // set new to true to return the updated doc
+        { new: true }
+      );
+    } else {
+      // if user not in already liked list, add them and increment the favoriteCount
+      return await models.Note.findByIdAndUpdate(
+        id,
+        {
+          $push: {
+            favoritedBy: mongoose.Types.ObjectId(user.id),
+          },
+          $inc: {
+            favoriteCount: 1,
+          },
+        },
+        { new: true }
+      );
+    }
   },
 };
