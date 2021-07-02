@@ -22,12 +22,20 @@ module.exports = gql`
     favorites: [Note!]!
   }
 
+  # cursor based pagination
+  type NoteFeed {
+    notes: [Note]!
+    cursor: String!
+    hasNextPage: Boolean!
+  }
+
   type Query {
     notes: [Note]
     singleNote(id: ID!): Note
     user(username: String!): User
     users: [User!]!
     me: User!
+    noteFeed(cursor: String): NoteFeed
   }
 
   type Mutation {
