@@ -4,7 +4,7 @@ module.exports = {
   notes: async (parent, args, { models }) => {
     return await models.Note.find();
   },
-  singleNote: async (parent, args, { models }) => {
+  note: async (parent, args, { models }) => {
     return await models.Note.findById(args.id);
   },
   user: async (parent, { username }, { models }) => {

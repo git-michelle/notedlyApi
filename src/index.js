@@ -19,6 +19,7 @@ const getUser = (token) => {
     try {
       return jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
+      console.log("the token ", token);
       throw new Error("Session Invalid");
     }
   }
